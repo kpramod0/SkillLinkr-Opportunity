@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ================================================
+   LIGHT MODE (default)
+   Clean, professional, warm palette
+   ================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f0f0f3;
+  --foreground: #1a1a2e;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --muted: #e4e4e8;
+  --muted-foreground: #6b6b80;
+  --border: #d4d4dc;
+  --input: #e4e4e8;
+  --ring: #10b981;
+  --card: #f7f7f9;
+  --card-foreground: #1a1a2e;
 }
 
-@theme inline {
+/* ================================================
+   DARK MODE (original colors — restored exactly)
+   ================================================ */
+.dark {
+  --background: #09090b;
+  --foreground: #ededed;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #059669;
+  --card: #18181b;
+  --card-foreground: #ededed;
+}
+
+/* Tailwind theme tokens (dynamic via CSS vars) */
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentColor);
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 }
