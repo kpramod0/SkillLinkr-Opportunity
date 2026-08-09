@@ -7,7 +7,6 @@ import { adminOnboardingSchema, ambassadorOnboardingSchema, societyOnboardingSch
 import { sendOtpEmail } from '@/lib/mailer'
 import crypto from 'crypto'
 import { revalidatePath } from 'next/cache'
-import { getCollegeByDomain } from '@/lib/colleges' // Or use college-resolver from OMS
 
 export async function completeAdminOnboarding(data: { name: string }) {
   const auth = await requireAuth()

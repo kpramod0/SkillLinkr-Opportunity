@@ -10,13 +10,7 @@ export function AmbassadorsClient({ ambassadors, colleges }: { ambassadors: any[
   const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    collegeId: '',
-    contactNumber: '',
-    department: '',
-    designation: ''
+    fullName: '', email: '', collegeId: '', contactNumber: ''
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -29,16 +23,13 @@ export function AmbassadorsClient({ ambassadors, colleges }: { ambassadors: any[
     try {
       await registerAmbassador({
         email: formData.email,
-        password: formData.password,
         college_id: formData.collegeId,
         full_name: formData.fullName,
-        contact_number: formData.contactNumber,
-        department: formData.department,
-        designation: formData.designation
+        mobile_number: formData.contactNumber,
       })
       setIsRegisterModalOpen(false)
       setFormData({
-        fullName: '', email: '', password: '', collegeId: '', contactNumber: '', department: '', designation: ''
+        fullName: '', email: '', collegeId: '', contactNumber: ''
       })
     } catch (err: any) {
       alert(err.message)
@@ -156,10 +147,6 @@ export function AmbassadorsClient({ ambassadors, colleges }: { ambassadors: any[
                     <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" name="password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" required />
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium mb-1">College</label>
                     <select name="collegeId" value={formData.collegeId} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" required>
                       <option value="">Select College</option>
@@ -172,14 +159,7 @@ export function AmbassadorsClient({ ambassadors, colleges }: { ambassadors: any[
                     <label className="block text-sm font-medium mb-1">Contact Number</label>
                     <input type="tel" name="contactNumber" value={formData.contactNumber} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Department</label>
-                    <input type="text" name="department" value={formData.department} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Designation</label>
-                    <input type="text" name="designation" value={formData.designation} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border bg-background" />
-                  </div>
+
                 </div>
               </div>
               

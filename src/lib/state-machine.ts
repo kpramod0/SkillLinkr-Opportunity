@@ -2,7 +2,7 @@ import { RoleCandidate } from './role-resolver'; // We only care about actual ro
 
 export type OpportunityStatus = 'draft' | 'submitted' | 'under_review' | 'correction_requested' | 'correction_submitted' | 'approved' | 'published' | 'rejected' | 'archived';
 
-const allowedTransitions: Record<RoleCandidate, Record<OpportunityStatus, OpportunityStatus[]>> = {
+const allowedTransitions: Partial<Record<RoleCandidate, Record<OpportunityStatus, OpportunityStatus[]>>> = {
   admin: {
     draft: ['submitted', 'published'],
     submitted: ['under_review', 'approved', 'published', 'rejected', 'correction_requested'],

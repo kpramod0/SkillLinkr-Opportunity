@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase-server'
-import { getCollegeByDomain } from '@/lib/colleges' // Check if this exists, else implement it
+import { resolveCollegeFromEmail } from '@/lib/college-resolver'
 import { sendOtpEmail } from '@/lib/mailer'
 import crypto from 'crypto'
 import { societyOnboardingSchema } from '@/validations/schemas'

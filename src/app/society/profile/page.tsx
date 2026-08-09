@@ -40,7 +40,7 @@ export default async function SocietyProfilePage() {
     representative_name: society.representative_name,
     contact_number: society.contact_number || '',
     position: society.position || '',
-    college_name: society.opp_colleges?.name || 'Unknown College',
+    college_name: (Array.isArray(society.opp_colleges) ? society.opp_colleges[0]?.name : (society.opp_colleges as any)?.name) || 'Unknown College',
     is_verified: society.is_verified,
     created_at: society.created_at
   }

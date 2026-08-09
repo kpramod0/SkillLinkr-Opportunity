@@ -39,7 +39,7 @@ export default async function AmbassadorProfilePage() {
     department: ambassador.department || '',
     year: ambassador.year || new Date().getFullYear(),
     contact_number: ambassador.contact_number || '',
-    college_name: ambassador.opp_colleges?.name || 'Unknown College',
+    college_name: (Array.isArray(ambassador.opp_colleges) ? ambassador.opp_colleges[0]?.name : (ambassador.opp_colleges as any)?.name) || 'Unknown College',
     created_at: ambassador.created_at
   }
 

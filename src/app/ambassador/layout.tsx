@@ -10,7 +10,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
   const isSocietyMember = amb?.is_society_member || false
   
   const userName = amb?.full_name || 'Ambassador'
-  const collegeName = amb?.opp_colleges?.name || 'University'
+  const collegeName = (Array.isArray(amb?.opp_colleges) ? amb?.opp_colleges[0]?.name : (amb?.opp_colleges as any)?.name) || 'University'
 
   // Fetch count of pending reviews for the ambassador's college
   let pendingReviewsCount = 0

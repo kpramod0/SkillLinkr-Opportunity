@@ -18,7 +18,7 @@ export default async function SocietyLayout({ children }: { children: React.Reac
       
     if (soc) {
       userName = soc.society_name
-      collegeName = soc.opp_colleges?.name || collegeName
+      collegeName = (Array.isArray(soc.opp_colleges) ? soc.opp_colleges[0]?.name : (soc.opp_colleges as any)?.name) || collegeName
     }
   }
 

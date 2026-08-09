@@ -71,7 +71,7 @@ export default async function AmbassadorHistoryPage() {
       historyMap.set(opp.id, {
         id: opp.id,
         title: opp.title,
-        society: opp.opp_societies?.society_name || 'Unknown Society',
+        society: (Array.isArray(opp.opp_societies) ? opp.opp_societies[0]?.society_name : (opp.opp_societies as any)?.society_name) || 'Unknown Society',
         date: new Date(opp.updated_at).toISOString().split('T')[0],
         action: opp.status === 'published' ? 'Approved' : 
                opp.status === 'rejected' ? 'Rejected' : 
@@ -92,7 +92,7 @@ export default async function AmbassadorHistoryPage() {
           historyMap.set(entry.opportunity_id, {
             id: opp.id,
             title: opp.title,
-            society: opp.opp_societies?.society_name || 'Unknown Society',
+            society: (Array.isArray(opp.opp_societies) ? opp.opp_societies[0]?.society_name : (opp.opp_societies as any)?.society_name) || 'Unknown Society',
             date: new Date(entry.created_at).toISOString().split('T')[0],
             action: entry.status === 'published' ? 'Approved' : 
                    entry.status === 'rejected' ? 'Rejected' : 

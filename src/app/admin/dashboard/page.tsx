@@ -65,7 +65,8 @@ export default async function AdminDashboardPage() {
   topCollegesRaw?.forEach(row => {
     if (row.college_id && row.opp_colleges) {
       if (!collegeCount[row.college_id]) {
-        collegeCount[row.college_id] = { name: row.opp_colleges.name, count: 0 }
+        const cName = Array.isArray(row.opp_colleges) ? row.opp_colleges[0]?.name : (row.opp_colleges as any)?.name;
+        collegeCount[row.college_id] = { name: cName, count: 0 }
       }
       collegeCount[row.college_id].count++
     }

@@ -58,9 +58,6 @@ export async function createOpportunity(data: any, isSubmit: boolean = false) {
     opportunityId = newOpp.id;
   }
 
-  if (error) {
-    throw new Error(error.message)
-  }
   
   if (imageUrls && imageUrls.medium) {
     await supabase.from('opp_opportunity_images').insert({
