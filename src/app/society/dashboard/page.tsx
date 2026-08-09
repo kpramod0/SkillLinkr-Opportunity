@@ -1,113 +1,77 @@
-"use client"
+import { requireAuth } from '@/app/actions/auth-helpers'
+import { createClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
+import { SocietyDashboardClient } from './SocietyDashboardClient'
+import { subDays, format } from 'date-fns'
 
-import { PlusCircle, FileText, CheckCircle, Clock, Eye, MousePointerClick } from 'lucide-react'
-import Link from 'next/link'
+import { AccountConfigurationError } from '@/components/ui/AccountConfigurationError'
 
-export default function SocietyDashboardPage() {
+export default async function SocietyDashboardPage() {
+  const auth = await requireAuth()
+  if (auth.role !== 'society') {
+    redirect('/')
+  }
+  
+  if (!auth.collegeId || !auth.societyId) {
+    return <AccountConfigurationError type="society" />
+  }
+
+  const supabase = await createClient()
+  
+  const { data: opportunities, error } = await supabase
+    .from('opp_opportunities')
+    .select('*')
+    .eq('society_id', auth.societyId)
+    .order('updated_at', { ascending: false })
+
+  const opps = opportunities || []
+  const oppIds = opps.map(o => o.id)
+  
+  const drafts = opps.filter(o => o.status === 'draft')
+  const submissions = opps.filter(o => o.status !== 'draft')
+  
+  const totalSubmissions = submissions.length
+  const published = submissions.filter(o => o.status === 'published' || o.status === 'live').length
+  const totalViews = opps.reduce((sum, o) => sum + (o.view_count || 0), 0)
+  const totalRegs = opps.reduce((sum, o) => sum + (o.reg_click_count || 0), 0)
+
+  // Chart Data: Last 7 days interactions
+  const chartDataMap = new Map()
+  for (let i = 6; i >= 0; i--) {
+    const d = subDays(new Date(), i)
+    chartDataMap.set(format(d, 'MMM dd'), { date: format(d, 'MMM dd'), views: 0, clicks: 0 })
+  }
+
+  if (oppIds.length > 0) {
+    const sevenDaysAgo = subDays(new Date(), 7).toISOString()
+    const { data: interactions } = await supabase
+      .from('opp_interactions')
+      .select('type, created_at')
+      .in('opportunity_id', oppIds)
+      .gte('created_at', sevenDaysAgo)
+      
+    interactions?.forEach(interaction => {
+      const d = format(new Date(interaction.created_at), 'MMM dd')
+      if (chartDataMap.has(d)) {
+        const item = chartDataMap.get(d)
+        if (interaction.type === 'view') item.views++
+        if (interaction.type === 'reg_click') item.clicks++
+      }
+    })
+  }
+
+  const chartData = Array.from(chartDataMap.values())
+
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Welcome, Tech Society</h1>
-          <p className="text-muted-foreground mt-1">Publish and manage opportunities for students across India.</p>
-        </div>
-        <Link 
-          href="/society/submit"
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-colors"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Create Opportunity
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card border rounded-2xl p-6 shadow-sm flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-blue-500/10">
-            <FileText className="h-6 w-6 text-blue-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Submissions</p>
-            <p className="text-2xl font-bold text-foreground mt-1">12</p>
-          </div>
-        </div>
-        
-        <div className="bg-card border rounded-2xl p-6 shadow-sm flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-emerald-500/10">
-            <CheckCircle className="h-6 w-6 text-emerald-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Published</p>
-            <p className="text-2xl font-bold text-foreground mt-1">8</p>
-          </div>
-        </div>
-
-        <div className="bg-card border rounded-2xl p-6 shadow-sm flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-purple-500/10">
-            <Eye className="h-6 w-6 text-purple-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Views</p>
-            <p className="text-2xl font-bold text-foreground mt-1">4.5k</p>
-          </div>
-        </div>
-
-        <div className="bg-card border rounded-2xl p-6 shadow-sm flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-amber-500/10">
-            <MousePointerClick className="h-6 w-6 text-amber-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Registrations</p>
-            <p className="text-2xl font-bold text-foreground mt-1">850</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b flex justify-between items-center bg-muted/10">
-            <h2 className="font-bold text-foreground">Recent Submissions</h2>
-            <Link href="/society/submissions" className="text-sm font-medium text-primary hover:underline">View All</Link>
-          </div>
-          <div className="divide-y">
-            {[
-              { title: 'TechNova Workshop', status: 'under_review', time: '2 hours ago' },
-              { title: 'CodeSprint 2026', status: 'published', time: '5 days ago' },
-            ].map((item, i) => (
-              <div key={i} className="p-6 flex items-center justify-between hover:bg-muted/20 transition-colors">
-                <div>
-                  <p className="font-medium text-foreground">{item.title}</p>
-                  <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {item.time}
-                  </p>
-                </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${
-                  item.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
-                }`}>
-                  {item.status.replace('_', ' ')}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b flex justify-between items-center bg-muted/10">
-            <h2 className="font-bold text-foreground">Drafts</h2>
-          </div>
-          <div className="p-6">
-            <div className="p-4 border border-dashed rounded-xl flex items-center justify-between hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-colors">
-              <div>
-                <p className="font-medium">Web3 Builders Hackathon</p>
-                <p className="text-sm text-muted-foreground mt-1">Step 2: Opportunity Details • Saved 10 mins ago</p>
-              </div>
-              <button className="px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg text-sm">
-                Resume
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <SocietyDashboardClient 
+      opps={opps} 
+      submissions={submissions} 
+      drafts={drafts} 
+      totalSubmissions={totalSubmissions} 
+      published={published} 
+      totalViews={totalViews} 
+      totalRegs={totalRegs} 
+      chartData={chartData} 
+    />
   )
 }

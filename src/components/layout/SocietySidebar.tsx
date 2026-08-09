@@ -12,23 +12,62 @@ const navItems = [
   { href: '/society/profile', label: 'Society Profile', icon: Settings },
 ]
 
-export function SocietySidebar() {
+import { X, LogOut } from 'lucide-react'
+import { createClient } from '@/lib/supabase-client'
+
+interface SocietySidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userName?: string;
+  collegeName?: string;
+}
+
+export function SocietySidebar({ isOpen, onClose, userName = "Society", collegeName = "University" }: SocietySidebarProps) {
   const pathname = usePathname()
 
-  return (
-    <div className="w-64 bg-card border-r h-full flex flex-col">
-      <div className="p-6 border-b">
-        <h2 className="text-xl font-bold text-primary">SkillLinkr</h2>
-        <p className="text-xs text-muted-foreground mt-1 tracking-wider uppercase font-semibold">Society Portal</p>
-      </div>
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
 
-      <nav className="flex-1 px-4 space-y-1 mt-4">
+  return (
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar Drawer */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-card border-r h-full flex flex-col transform transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="p-6 border-b flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-primary">SkillLinkr</h2>
+            <p className="text-xs text-muted-foreground mt-1 tracking-wider uppercase font-semibold">Society Portal</p>
+          </div>
+          <button 
+            onClick={onClose}
+            className="md:hidden p-2 -mr-2 text-muted-foreground hover:bg-accent rounded-lg"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 px-4 space-y-1 mt-4 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
                 isActive 
                   ? 'bg-primary/10 text-primary font-medium' 
@@ -37,27 +76,26 @@ export function SocietySidebar() {
             >
               <item.icon className="h-5 w-5" />
               <span>{item.label}</span>
-              {item.label === 'Drafts' && (
-                <span className="ml-auto inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500">
-                  1
-                </span>
-              )}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-4 border-t">
-        <div className="flex items-center gap-3">
+      <div className="p-4 border-t flex flex-col gap-2">
+        <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-500 hover:text-red-600 font-medium px-2 py-1.5 transition-colors">
+          <LogOut className="h-4 w-4" /> Sign Out
+        </button>
+        <div className="flex items-center gap-3 mt-2">
           <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-            TS
+            {userName.substring(0, 2).toUpperCase()}
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate">Tech Society</p>
-            <p className="text-xs text-muted-foreground truncate">KIIT University</p>
+            <p className="text-sm font-medium truncate">{userName}</p>
+            <p className="text-xs text-muted-foreground truncate">{collegeName}</p>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

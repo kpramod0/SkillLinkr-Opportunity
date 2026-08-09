@@ -1,54 +1,74 @@
-"use client"
+import { requireAuth } from '@/app/actions/auth-helpers'
+import { createClient } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
+import { AmbassadorDashboardClient } from './AmbassadorDashboardClient'
+import { subDays, format } from 'date-fns'
 
-import { CheckSquare, Clock, CheckCircle, Ban } from 'lucide-react'
+import { AccountConfigurationError } from '@/components/ui/AccountConfigurationError'
 
-const statCards = [
-  { label: 'Pending Reviews', value: '3', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { label: 'Total Reviewed', value: '45', icon: CheckSquare, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { label: 'Approved', value: '40', icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { label: 'Correction Requested', value: '5', icon: Ban, color: 'text-red-500', bg: 'bg-red-500/10' },
-]
+export default async function AmbassadorDashboardPage() {
+  const auth = await requireAuth()
+  if (auth.role !== 'ambassador') {
+    redirect('/')
+  }
+  
+  if (!auth.collegeId) {
+    return <AccountConfigurationError type="ambassador" />
+  }
 
-export default function AmbassadorDashboardPage() {
+  const supabase = await createClient()
+  
+  const { data: opportunities } = await supabase
+    .from('opp_opportunities')
+    .select('id, status')
+    .eq('college_id', auth.collegeId)
+    
+  const opps = opportunities || []
+  
+  const pending = opps.filter(o => o.status === 'submitted' || o.status === 'correction_submitted').length
+  const approved = opps.filter(o => o.status === 'ready_for_publish' || o.status === 'published').length
+  const rejected = opps.filter(o => o.status === 'rejected' || o.status === 'needs_correction').length
+  const totalReviewed = approved + rejected
+
+  const stats = { pending, totalReviewed, approved, rejected }
+
+  // Activity Timeline
+  const { data: recentActivity } = await supabase
+    .from('opp_submissions_timeline')
+    .select('id, to_status, created_at, opp_opportunities(title)')
+    .eq('actor_id', auth.userId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  // Chart Data: Last 7 days reviews
+  const chartDataMap = new Map()
+  for (let i = 6; i >= 0; i--) {
+    const d = subDays(new Date(), i)
+    chartDataMap.set(format(d, 'MMM dd'), { date: format(d, 'MMM dd'), reviews: 0 })
+  }
+
+  const sevenDaysAgo = subDays(new Date(), 7).toISOString()
+  const { data: timelineData } = await supabase
+    .from('opp_submissions_timeline')
+    .select('created_at')
+    .eq('actor_id', auth.userId)
+    .in('to_status', ['ready_for_publish', 'rejected', 'needs_correction'])
+    .gte('created_at', sevenDaysAgo)
+
+  timelineData?.forEach(item => {
+    const d = format(new Date(item.created_at), 'MMM dd')
+    if (chartDataMap.has(d)) {
+      chartDataMap.get(d).reviews++
+    }
+  })
+
+  const chartData = Array.from(chartDataMap.values())
+
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Ambassador Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Manage society submissions for your college.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <div key={i} className="bg-card border rounded-2xl p-6 shadow-sm flex items-start gap-4">
-            <div className={`p-3 rounded-xl ${stat.bg}`}>
-              <stat.icon className={`h-6 w-6 ${stat.color}`} />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-lg font-bold text-foreground">Recent Activity</h2>
-        </div>
-        <div className="divide-y">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="p-6 flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">Approved: &quot;TechNova Hackathon&quot;</p>
-                <p className="text-sm text-muted-foreground mt-1">Submitted by Tech Society • 2 hours ago</p>
-              </div>
-              <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-xs font-bold">
-                Ready For Publish
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <AmbassadorDashboardClient 
+      stats={stats} 
+      recentActivity={recentActivity || []} 
+      chartData={chartData} 
+    />
   )
 }

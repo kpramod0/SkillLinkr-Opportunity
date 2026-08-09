@@ -1,12 +1,30 @@
-import { SocietySidebar } from '@/components/layout/SocietySidebar'
+import { SocietyLayoutWrapper } from '@/components/layout/SocietyLayoutWrapper'
+import { requireAuth } from '@/app/actions/auth-helpers'
+import { createClient } from '@/lib/supabase-server'
 
-export default function SocietyLayout({ children }: { children: React.ReactNode }) {
+export default async function SocietyLayout({ children }: { children: React.ReactNode }) {
+  const auth = await requireAuth()
+  const supabase = await createClient()
+
+  let userName = 'Society'
+  let collegeName = 'University'
+
+  if (auth.societyId) {
+    const { data: soc } = await supabase
+      .from('opp_societies')
+      .select('society_name, opp_colleges(name)')
+      .eq('id', auth.societyId)
+      .single()
+      
+    if (soc) {
+      userName = soc.society_name
+      collegeName = soc.opp_colleges?.name || collegeName
+    }
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <SocietySidebar />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <SocietyLayoutWrapper userName={userName} collegeName={collegeName}>
+      {children}
+    </SocietyLayoutWrapper>
   )
 }

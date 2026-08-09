@@ -1,12 +1,20 @@
-import { AdminSidebar } from '@/components/layout/AdminSidebar'
+import { AdminLayoutWrapper } from '@/components/layout/AdminLayoutWrapper'
+import { createClient } from '@/lib/supabase-server'
+import { requireAuth } from '@/app/actions/auth-helpers'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const auth = await requireAuth()
+  const supabase = await createClient()
+
+  const { data: user } = await supabase.from('opp_users').select('name').eq('id', auth.userId).single()
+  const userName = user?.name || 'Admin User'
+  
+  // Format role for display
+  const roleDisplay = auth.role === 'super_admin' ? 'Super Admin' : 'Admin'
+
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
-    </div>
+    <AdminLayoutWrapper userName={userName} role={roleDisplay}>
+      {children}
+    </AdminLayoutWrapper>
   )
 }
