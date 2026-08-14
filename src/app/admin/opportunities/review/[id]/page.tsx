@@ -1,5 +1,5 @@
 import { requireAuth } from '@/app/actions/auth-helpers'
-import { createClient } from '@/lib/supabase-server'
+import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { ReviewClient } from './ReviewClient'
 import { AccountConfigurationError } from '@/components/ui/AccountConfigurationError'
@@ -26,7 +26,8 @@ export default async function ReviewOpportunityPage(props: { params: Promise<{ i
     redirect('/admin/opportunities')
   }
 
-  const { data: image } = await supabase
+  const adminSupabase = await createAdminClient();
+  const { data: image } = await adminSupabase
     .from('opp_opportunity_images')
     .select('*')
     .eq('opportunity_id', params.id)

@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase-server'
+import { createClient, createAdminClient } from '@/lib/supabase-server'
 import { requireAuth } from './auth-helpers'
 import { revalidatePath } from 'next/cache'
 
@@ -60,7 +60,8 @@ export async function createOpportunity(data: any, isSubmit: boolean = false) {
 
   
   if (imageUrls && imageUrls.medium) {
-    await supabase.from('opp_opportunity_images').insert({
+    const adminSupabase = await createAdminClient();
+    await adminSupabase.from('opp_opportunity_images').insert({
       opportunity_id: opportunityId,
       thumbnail_url: imageUrls.thumbnail,
       medium_url: imageUrls.medium,
